@@ -56,10 +56,12 @@ app.get("/active-devices", async (req, res) => {
     .project({ _id: 0, device_name: 1, map_name: 1 })
     .toArray();
 
-  res.json({
-    count: devices.length,
-    devices
+  const lines = devices.map((device, index) => {
+    return `${index + 1}|${device.device_name}|${device.map_name}`;
   });
+
+  res.set("Content-Type", "text/plain; charset=utf-8");
+  res.send(lines.join("\n"));
 });
 
 app.listen(PORT, () => {
