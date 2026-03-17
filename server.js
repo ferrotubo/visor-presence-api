@@ -53,7 +53,12 @@ app.get("/active-devices", async (req, res) => {
 
   const devices = await collection
     .find({ last_seen: { $gt: cutoff } })
-    .project({ _id: 0, device_name: 1, map_name: 1 })
+    .project({ 
+      _id: 0, 
+      session_id: 1,   // 👈 AÑADE ESTO
+      device_name: 1, 
+      map_name: 1 
+    })
     .toArray();
 
   res.json({
