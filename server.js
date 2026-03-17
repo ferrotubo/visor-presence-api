@@ -8,7 +8,6 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// CAMBIA ESTO POR TU URI DE MONGODB
 const MONGO_URI = process.env.MONGO_URI;
 
 const client = new MongoClient(MONGO_URI);
