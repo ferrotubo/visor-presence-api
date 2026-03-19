@@ -67,15 +67,40 @@ app.get("/active-devices", async (req, res) => {
   try {
     const cutoff = new Date(Date.now() - 60000);
 
-    const devices = await collection
-      .find({ last_seen: { $gt: cutoff } })
-      .project({
-        _id: 0,
-        session_id: 1,
-        device_name: 1,
-        map_name: 1
-      })
-      .toArray();
+    const devices = await collection.aggregate([
+      {
+        $match: {
+          last_seen: { $gt: cutoff }
+        }
+      },
+      {
+        $sort: {
+          last_seen: -1
+        }
+      },
+      {
+        $group: {
+          _id: "$device_name",
+          session_id: { $first: "$session_id" },
+          device_name: { $first: "$device_name" },
+          map_name: { $first: "$map_name" },
+          last_seen: { $first: "$last_seen" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          session_id: 1,
+          device_name: 1,
+          map_name: 1
+        }
+      },
+      {
+        $sort: {
+          device_name: 1
+        }
+      }
+    ]).toArray();
 
     res.json({
       count: devices.length,
