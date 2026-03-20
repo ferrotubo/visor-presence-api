@@ -9,6 +9,11 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI;
 
+if (!MONGO_URI) {
+  console.error("Falta la variable de entorno MONGO_URI");
+  process.exit(1);
+}
+
 const client = new MongoClient(MONGO_URI);
 
 let collection;
@@ -20,6 +25,13 @@ async function connectDB() {
 
   collection = db.collection("active_devices");
   chatCollection = db.collection("chat_messages");
+
+  await collection.createIndex({ session_id: 1 }, { unique: true });
+  await collection.createIndex({ last_seen: 1 });
+  await collection.createIndex({ device_name: 1 });
+
+  await chatCollection.createIndex({ timestamp: -1 });
+  await chatCollection.createIndex({ session_id: 1 });
 
   console.log("MongoDB conectado");
 }
@@ -35,7 +47,9 @@ app.get("/", (req, res) => {
 
 app.post("/heartbeat", async (req, res) => {
   try {
-    const { device_name, map_name, session_id } = req.body;
+    const session_id = String(req.body.session_id || "").trim();
+    const device_name = String(req.body.device_name || "").trim();
+    const map_name = String(req.body.map_name || "").trim();
 
     if (!device_name || !map_name || !session_id) {
       return res.status(400).json({ error: "Missing fields" });
@@ -114,16 +128,13 @@ app.get("/active-devices", async (req, res) => {
 
 app.post("/send-message", async (req, res) => {
   try {
-    const { session_id, device_name, map_name, message } = req.body;
+    const session_id = String(req.body.session_id || "").trim();
+    const device_name = String(req.body.device_name || "").trim();
+    const map_name = String(req.body.map_name || "").trim();
+    const trimmedMessage = String(req.body.message || "").trim();
 
-    if (!session_id || !device_name || !map_name || !message) {
+    if (!session_id || !device_name || !map_name || !trimmedMessage) {
       return res.status(400).json({ error: "Missing fields" });
-    }
-
-    const trimmedMessage = String(message).trim();
-
-    if (trimmedMessage.length === 0) {
-      return res.status(400).json({ error: "Empty message" });
     }
 
     if (trimmedMessage.length > 120) {
