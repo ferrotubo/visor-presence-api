@@ -137,7 +137,7 @@ app.post("/send-message", async (req, res) => {
       return res.status(400).json({ error: "Missing fields" });
     }
 
-    if (trimmedMessage.length > 120) {
+    if (trimmedMessage.length > 500) {
       return res.status(400).json({ error: "Message too long" });
     }
 
