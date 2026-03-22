@@ -32,7 +32,6 @@ async function connectDB() {
 
   await chatCollection.createIndex({ timestamp: -1 });
   await chatCollection.createIndex({ session_id: 1 });
-  await chatCollection.createIndex({ session_id: 1, timestamp: -1 });
 
   console.log("MongoDB conectado");
 }
@@ -52,7 +51,7 @@ app.post("/heartbeat", async (req, res) => {
     const device_name = String(req.body.device_name || "").trim();
     const map_name = String(req.body.map_name || "").trim();
 
-    if (!session_id || !device_name || !map_name) {
+    if (!device_name || !map_name || !session_id) {
       return res.status(400).json({ error: "Missing fields" });
     }
 
@@ -159,14 +158,8 @@ app.post("/send-message", async (req, res) => {
 
 app.get("/messages", async (req, res) => {
   try {
-    const session_id = String(req.query.session_id || "").trim();
-
-    if (!session_id) {
-      return res.status(400).json({ error: "Missing session_id" });
-    }
-
     const messages = await chatCollection
-      .find({ session_id })
+      .find({})
       .sort({ timestamp: -1 })
       .limit(30)
       .project({
