@@ -192,4 +192,3 @@ app.get("/messages", async (req, res) => {
 app.listen(PORT, () => {
   console.log("Servidor iniciado en puerto", PORT);
 });
-});
