@@ -79,7 +79,7 @@ app.post("/heartbeat", async (req, res) => {
 
 app.get("/active-devices", async (req, res) => {
   try {
-    const cutoff = new Date(Date.now() - 60000);
+    const cutoff = new Date(Date.now() - 20000);
 
     const devices = await collection.aggregate([
       {
