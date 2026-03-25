@@ -32,6 +32,7 @@ async function connectDB() {
 
   await chatCollection.createIndex({ timestamp: -1 });
   await chatCollection.createIndex({ session_id: 1 });
+  await chatCollection.createIndex({ app_name: 1, timestamp: -1 });
 
   console.log("MongoDB conectado");
 }
@@ -131,9 +132,10 @@ app.post("/send-message", async (req, res) => {
     const session_id = String(req.body.session_id || "").trim();
     const device_name = String(req.body.device_name || "").trim();
     const map_name = String(req.body.map_name || "").trim();
+    const app_name = String(req.body.app_name || "").trim();
     const trimmedMessage = String(req.body.message || "").trim();
 
-    if (!session_id || !device_name || !map_name || !trimmedMessage) {
+    if (!session_id || !device_name || !map_name || !app_name || !trimmedMessage) {
       return res.status(400).json({ error: "Missing fields" });
     }
 
@@ -145,6 +147,7 @@ app.post("/send-message", async (req, res) => {
       session_id,
       device_name,
       map_name,
+      app_name,
       message: trimmedMessage,
       timestamp: new Date()
     });
@@ -158,8 +161,14 @@ app.post("/send-message", async (req, res) => {
 
 app.get("/messages", async (req, res) => {
   try {
+    const app_name = String(req.query.app_name || "").trim();
+
+    if (!app_name) {
+      return res.status(400).json({ error: "Missing app_name" });
+    }
+
     const messages = await chatCollection
-      .find({})
+      .find({ app_name })
       .sort({ timestamp: -1 })
       .limit(30)
       .project({
@@ -167,6 +176,7 @@ app.get("/messages", async (req, res) => {
         session_id: 1,
         device_name: 1,
         map_name: 1,
+        app_name: 1,
         message: 1,
         timestamp: 1
       })
